@@ -328,7 +328,8 @@
         }
 
         /*======== sort-button , clear-button ============*/
-        .pinned-tabs-container-separator{
+        .pinned-tabs-container-separator,
+        .vertical-pinned-tabs-container-separator {
             height: 100% !important;
             transition: all .2s ease-in-out !important;
             display: flex !important;
@@ -539,6 +540,18 @@
     let commandListenerAdded = false;
 
     // --- Helper Functions ---
+
+    const getCurrentWorkspaceId = () => {
+        if (typeof gZenWorkspaces === 'undefined') return null;
+        // Check for property first (legacy)
+        if (gZenWorkspaces.activeWorkspace) return gZenWorkspaces.activeWorkspace;
+        // Check for method (new)
+        if (typeof gZenWorkspaces.getActiveWorkspace === 'function') {
+            const ws = gZenWorkspaces.getActiveWorkspace();
+            return ws ? (ws.id || ws.uuid) : null;
+        }
+        return null;
+    };
 
     const injectStyles = () => {
         let styleElement = document.getElementById('tab-sort-clear-styles');
@@ -1150,7 +1163,7 @@
 
         let separatorsToSort = []; // Keep track of separators to remove class later
         try {
-            separatorsToSort = document.querySelectorAll('.pinned-tabs-container-separator');
+            separatorsToSort = document.querySelectorAll('.pinned-tabs-container-separator, .vertical-pinned-tabs-container-separator');
             if (separatorsToSort.length > 0) {
                 console.log("Applying sorting indicator to separator(s)...");
                 separatorsToSort.forEach(sep => {
@@ -1192,7 +1205,7 @@
                 console.warn("Could not find separator element to apply sorting indicator.");
             }
 
-            const currentWorkspaceId = window.gZenWorkspaces?.activeWorkspace;
+            const currentWorkspaceId = getCurrentWorkspaceId();
             if (!currentWorkspaceId) {
                 console.error("Cannot get current workspace ID.");
                 // No need to set isSorting = false here, finally block handles it
@@ -1600,7 +1613,7 @@
         console.log("Clearing tabs...");
         let closedCount = 0;
         try {
-            const currentWorkspaceId = window.gZenWorkspaces?.activeWorkspace;
+            const currentWorkspaceId = getCurrentWorkspaceId();
             if (!currentWorkspaceId) {
                 console.error("CLEAR BTN: Cannot get current workspace ID.");
                 return;
@@ -1722,7 +1735,7 @@
                 }
 
                 // Check if we're in the correct workspace
-                const currentWorkspaceId = window.gZenWorkspaces?.activeWorkspace;
+                const currentWorkspaceId = getCurrentWorkspaceId();
                 const showMenuItem = currentWorkspaceId &&
                     (!gBrowser?.selectedTabs || gBrowser.selectedTabs.length <= 1); // Hide when multiple tabs selected (use button instead)
 
@@ -1773,7 +1786,7 @@
     }
 
     function addButtonsToAllSeparators() {
-        const separators = document.querySelectorAll(".pinned-tabs-container-separator");
+        const separators = document.querySelectorAll(".pinned-tabs-container-separator, .vertical-pinned-tabs-container-separator");
         if (separators.length > 0) {
             separators.forEach(ensureButtonsExist);
         } else {
@@ -1905,12 +1918,12 @@
             checkCount++;
 
             // Check for necessary conditions
-            const separatorExists = !!document.querySelector(".pinned-tabs-container-separator");
+            const separatorExists = !!document.querySelector(".pinned-tabs-container-separator") || !!document.querySelector(".vertical-pinned-tabs-container-separator");
             const peripheryExists = !!document.querySelector('#tabbrowser-arrowscrollbox-periphery');
             const commandSetExists = !!document.querySelector("commandset#zenCommandSet");
             const tabContextMenuExists = !!document.getElementById('tabContextMenu');
             const gBrowserReady = typeof gBrowser !== 'undefined' && gBrowser.tabContainer;
-            const gZenWorkspacesReady = typeof gZenWorkspaces !== 'undefined' && typeof gZenWorkspaces.activeWorkspace !== 'undefined';
+            const gZenWorkspacesReady = typeof gZenWorkspaces !== 'undefined' && (typeof gZenWorkspaces.activeWorkspace !== 'undefined' || typeof gZenWorkspaces.getActiveWorkspace === 'function');
 
             const ready = gBrowserReady && commandSetExists && tabContextMenuExists && (separatorExists || peripheryExists) && gZenWorkspacesReady;
 
