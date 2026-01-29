@@ -729,6 +729,53 @@
         }
         return matrix[b.length][a.length];
     };
+    const createZenTabGroup = (tabs, label) => {
+        try {
+            const newGroup = document.createXULElement("tab-group");
+            newGroup.id = `${Date.now()}-${Math.round(Math.random() * 100)}`;
+            newGroup.label = label;
+
+            // Determine where to insert the group.
+            // Using logic similar to advanced-tab-groups: activeWorkspaceStrip or tabContainer
+            const container = gZenWorkspaces ? gZenWorkspaces.activeWorkspaceStrip : null;
+
+            if (container) {
+                // Prepend to top of workspace strip
+                container.prepend(newGroup);
+            } else if (gBrowser.tabContainer) {
+                // Fallback to tab container for non-workspace setup (unlikely in Zen but safe)
+                gBrowser.tabContainer.appendChild(newGroup);
+            } else {
+                console.error("No valid container found to append new tab-group.");
+                return null;
+            }
+
+            if (newGroup.addTabs && typeof newGroup.addTabs === 'function') {
+                newGroup.addTabs(tabs);
+            } else {
+                console.warn("New group created but .addTabs is missing. Tabs might not be moved.");
+            }
+
+            // Integrate with Advanced Tab Groups if available
+            if (globalThis.advancedTabGroups && typeof globalThis.advancedTabGroups.processGroup === 'function') {
+                globalThis.advancedTabGroups.processGroup(newGroup);
+
+                // Set default color to favicon-based as per ATG defaults
+                if (typeof newGroup._useFaviconColor === "function") {
+                    newGroup.color = `${newGroup.id}-favicon`;
+                    newGroup._useFaviconColor();
+                }
+            } else {
+                console.warn("AdvancedTabGroups global not found. Group created but may lack features.");
+            }
+
+            return newGroup;
+        } catch (e) {
+            console.error("Error in createZenTabGroup:", e);
+            return null;
+        }
+    };
+
     // --- End Helper Functions ---
 
 
@@ -795,7 +842,7 @@
                         console.error("Gemini API Error Raw Response:", rawText);
                     }
                     if (response.status === 400 && errorText.includes("API key not valid")) {
-                         throw new Error(`Gemini API Error: API key is not valid. Please check the key in the script configuration. (${errorText})`);
+                        throw new Error(`Gemini API Error: API key is not valid. Please check the key in the script configuration. (${errorText})`);
                     }
                     if (response.status === 403) {
                         throw new Error(`Gemini API Error: Permission denied. Ensure the API key has the 'generativelanguage.models.generateContent' permission enabled. (${errorText})`);
@@ -809,7 +856,7 @@
                 if (!aiText) {
                     console.error("Gemini API: Empty or unexpected response structure.", data);
                     if (data?.promptFeedback?.blockReason) {
-                         throw new Error(`Gemini API Error: Request blocked due to ${data.promptFeedback.blockReason}. Check safety ratings: ${JSON.stringify(data.promptFeedback.safetyRatings)}`);
+                        throw new Error(`Gemini API Error: Request blocked due to ${data.promptFeedback.blockReason}. Check safety ratings: ${JSON.stringify(data.promptFeedback.safetyRatings)}`);
                     }
                     if (data?.candidates?.[0]?.finishReason && data.candidates[0].finishReason !== "STOP") {
                         throw new Error(`Gemini API Error: Generation finished unexpectedly due to ${data.candidates[0].finishReason}.`);
@@ -1103,29 +1150,29 @@
 
         let separatorsToSort = []; // Keep track of separators to remove class later
         try {
-             separatorsToSort = document.querySelectorAll('.pinned-tabs-container-separator');
-             if(separatorsToSort.length > 0) {
-                 console.log("Applying sorting indicator to separator(s)...");
-                 separatorsToSort.forEach(sep => {
-                     sep.classList.add('separator-is-sorting');
-                     // Force a reflow to ensure the animation starts immediately
-                     sep.offsetHeight;
-                     console.log("Animation class added to separator:", sep, "Classes:", sep.className);
-                     try {
-                         const elemStyles = getComputedStyle(sep);
-                         const beforeStyles = getComputedStyle(sep, '::before');
-                         const afterStyles = getComputedStyle(sep, '::after');
-                         console.log("Separator computed styles:", {
-                             elementAnimationName: elemStyles?.animationName,
-                             elementBackgroundColor: elemStyles?.backgroundColor,
-                             beforeAnimationName: beforeStyles?.animationName,
-                             beforeBackgroundColor: beforeStyles?.backgroundColor,
-                             beforeBackgroundImage: beforeStyles?.backgroundImage,
-                             afterAnimationName: afterStyles?.animationName,
-                             afterBackgroundColor: afterStyles?.backgroundColor,
-                             afterBackgroundImage: afterStyles?.backgroundImage
-                         });
-                                                 // Start JS-driven color cycle using a CSS variable
+            separatorsToSort = document.querySelectorAll('.pinned-tabs-container-separator');
+            if (separatorsToSort.length > 0) {
+                console.log("Applying sorting indicator to separator(s)...");
+                separatorsToSort.forEach(sep => {
+                    sep.classList.add('separator-is-sorting');
+                    // Force a reflow to ensure the animation starts immediately
+                    sep.offsetHeight;
+                    console.log("Animation class added to separator:", sep, "Classes:", sep.className);
+                    try {
+                        const elemStyles = getComputedStyle(sep);
+                        const beforeStyles = getComputedStyle(sep, '::before');
+                        const afterStyles = getComputedStyle(sep, '::after');
+                        console.log("Separator computed styles:", {
+                            elementAnimationName: elemStyles?.animationName,
+                            elementBackgroundColor: elemStyles?.backgroundColor,
+                            beforeAnimationName: beforeStyles?.animationName,
+                            beforeBackgroundColor: beforeStyles?.backgroundColor,
+                            beforeBackgroundImage: beforeStyles?.backgroundImage,
+                            afterAnimationName: afterStyles?.animationName,
+                            afterBackgroundColor: afterStyles?.backgroundColor,
+                            afterBackgroundImage: afterStyles?.backgroundImage
+                        });
+                        // Start JS-driven color cycle using a CSS variable
                         const colors = ['#ebbcba', '#c4a7e7', '#9ccfd8'];
                         let colorIndex = 0;
                         if (sep._sortingColorInterval) {
@@ -1137,13 +1184,13 @@
                             colorIndex = (colorIndex + 1) % colors.length;
                             sep.style.setProperty('--sorting-color', colors[colorIndex]);
                         }, 500);
-                     } catch (e) {
-                         console.warn("Could not read computed styles for separator:", e);
-                     }
-                 });
-             } else {
-                  console.warn("Could not find separator element to apply sorting indicator.");
-             }
+                    } catch (e) {
+                        console.warn("Could not read computed styles for separator:", e);
+                    }
+                });
+            } else {
+                console.warn("Could not find separator element to apply sorting indicator.");
+            }
 
             const currentWorkspaceId = window.gZenWorkspaces?.activeWorkspace;
             if (!currentWorkspaceId) {
@@ -1315,7 +1362,7 @@
             aiTabTopics.forEach(({ tab, topic }) => {
                 if (!topic || topic === "Uncategorized" || !tab || !tab.isConnected) {
                     if (topic && topic !== "Uncategorized") {
-                         console.warn(` -> AI suggested category "${topic}" but associated tab is invalid/disconnected.`);
+                        console.warn(` -> AI suggested category "${topic}" but associated tab is invalid/disconnected.`);
                     }
                     return; // Skip invalid/uncategorized/disconnected
                 }
@@ -1347,7 +1394,7 @@
                 while (consolidationMap[keyA]) {
                     keyA = consolidationMap[keyA];
                 }
-                 if (mergedKeys.has(keyA)) continue; // Check again after resolving transitive merges
+                if (mergedKeys.has(keyA)) continue; // Check again after resolving transitive merges
 
                 for (let j = i + 1; j < originalKeys.length; j++) {
                     let keyB = originalKeys[j];
@@ -1357,7 +1404,7 @@
                     while (consolidationMap[keyB]) {
                         keyB = consolidationMap[keyB];
                     }
-                     if (mergedKeys.has(keyB) || keyA === keyB) continue; // Already merged or identical after resolving
+                    if (mergedKeys.has(keyB) || keyA === keyB) continue; // Already merged or identical after resolving
 
                     const distance = levenshteinDistance(keyA, keyB);
                     const threshold = CONFIG.consolidationDistanceThreshold;
@@ -1377,14 +1424,14 @@
                             [canonicalKey, mergedKey] = [keyB, keyA]; // B is existing, A is not
                         } else if (keyAIsActuallyExisting && keyBIsActuallyExisting) {
                             // Both exist, prefer pre-group, then shorter
-                             if (keyBIsPreGroup && !keyAIsPreGroup) [canonicalKey, mergedKey] = [keyB, keyA];
-                             else if (keyA.length > keyB.length) [canonicalKey, mergedKey] = [keyB, keyA];
+                            if (keyBIsPreGroup && !keyAIsPreGroup) [canonicalKey, mergedKey] = [keyB, keyA];
+                            else if (keyA.length > keyB.length) [canonicalKey, mergedKey] = [keyB, keyA];
                         } else if (!keyAIsActuallyExisting && !keyBIsActuallyExisting) {
-                             // Neither exist, prefer pre-group, then shorter
-                             if (keyBIsPreGroup && !keyAIsPreGroup) [canonicalKey, mergedKey] = [keyB, keyA];
-                             else if (keyA.length > keyB.length) [canonicalKey, mergedKey] = [keyB, keyA];
+                            // Neither exist, prefer pre-group, then shorter
+                            if (keyBIsPreGroup && !keyAIsPreGroup) [canonicalKey, mergedKey] = [keyB, keyA];
+                            else if (keyA.length > keyB.length) [canonicalKey, mergedKey] = [keyB, keyA];
                         }
-                         // Handle the case where keyA exists, keyB doesn't (already default)
+                        // Handle the case where keyA exists, keyB doesn't (already default)
 
                         console.log(`    - Consolidating: Merging "${mergedKey}" into "${canonicalKey}" (Distance: ${distance})`);
 
@@ -1438,7 +1485,7 @@
                     if (!t || !t.isConnected) return false;
                     // Always allow valid tabs through; group membership will be checked at move time
                     return true;
-                 });
+                });
 
                 if (tabsForThisTopic.length === 0) {
                     console.log(` -> Skipping group "${topic}" as no valid, unsorted tabs remain in this workspace.`);
@@ -1460,16 +1507,20 @@
                                 groupLabelElement.setAttribute('aria-expanded', 'true'); // Ensure visually expanded too
                             }
                         }
-                        // Move tabs one by one
-                        for (const tab of tabsForThisTopic) {
-                            if (!tab || !tab.isConnected) continue;
-                            const groupParent = tab.closest('tab-group');
-                            // Only skip if already in the *target* group
-                            const isAlreadyInTargetGroup = groupParent === existingGroupElement;
-                            if (!isAlreadyInTargetGroup) {
-                                gBrowser.moveTabToGroup(tab, existingGroupElement);
-                            } else {
-                                console.log(` -> Tab "${getTabData(tab)?.title || 'Unknown'}" is already in the correct group "${topic}", skipping move.`);
+                        // Move tabs one by one - USING NEW API
+                        // Advanced Tab Groups / Zen native groups likely support addTabs([tabs])
+                        if (typeof existingGroupElement.addTabs === 'function') {
+                            existingGroupElement.addTabs(tabsForThisTopic);
+                        } else {
+                            // Fallback or error if addTabs isn't available (should be on standard Zen tab-group)
+                            console.warn(` -> Group "${topic}" does not have addTabs function. Attempting legacy move.`);
+                            for (const tab of tabsForThisTopic) {
+                                if (!tab || !tab.isConnected) continue;
+                                const groupParent = tab.closest('tab-group');
+                                const isAlreadyInTargetGroup = groupParent === existingGroupElement;
+                                if (!isAlreadyInTargetGroup) {
+                                    gBrowser.moveTabToGroup(tab, existingGroupElement);
+                                }
                             }
                         }
                     } catch (e) {
@@ -1487,40 +1538,18 @@
                     // Create group if it meets threshold OR came from pre-grouping OR came directly from AI
                     if (tabsForThisTopic.length >= CONFIG.preGroupingThreshold || wasDirectlyFromAI || wasOriginallyPreGroup) {
                         console.log(` -> Creating new group "${topic}" with ${tabsForThisTopic.length} tabs.`);
-                        const firstValidTabForGroup = tabsForThisTopic[0]; // Need a reference tab for insertion point
-                        const groupOptions = {
-                            label: topic,
-                            color: getNextGroupColorName(),
-                            insertBefore: firstValidTabForGroup // Insert before the first tab being added
-                        };
-                        try {
-                            // Create the group with all tabs at once
-                            const newGroup = gBrowser.addTabGroup(tabsForThisTopic, groupOptions);
 
-                            if (newGroup && newGroup.isConnected) { // Check if group was created and is in DOM
+                        try {
+                            const newGroup = createZenTabGroup(tabsForThisTopic, topic);
+                            if (newGroup && newGroup.isConnected) {
                                 console.log(` -> Successfully created group element for "${topic}".`);
-                                existingGroupElementsMap.set(topic, newGroup); // Add to map for potential later reuse in this run
+                                existingGroupElementsMap.set(topic, newGroup);
                             } else {
-                                console.warn(` -> addTabGroup didn't return a connected element for "${topic}". Attempting fallback find.`);
-                                // Use the CORRECTED findGroupElement helper
-                                const newGroupElFallback = findGroupElement(topic, currentWorkspaceId);
-                                if (newGroupElFallback && newGroupElFallback.isConnected) {
-                                    console.log(` -> Found new group element for "${topic}" via fallback.`);
-                                    existingGroupElementsMap.set(topic, newGroupElFallback); // Add to map via fallback
-                                } else {
-                                    console.error(` -> Failed to find the newly created group element for "${topic}" even with fallback.`);
-                                }
+                                console.error(` -> Failed to create connect group for "${topic}".`);
                             }
+
                         } catch (e) {
-                            console.error(`Error calling gBrowser.addTabGroup for topic "${topic}":`, e);
-                            // Attempt to find the group even after an error, it might have partially succeeded
-                            const groupAfterError = findGroupElement(topic, currentWorkspaceId);
-                            if (groupAfterError && groupAfterError.isConnected) {
-                                console.warn(` -> Group "${topic}" might exist despite error. Found via findGroupElement.`);
-                                existingGroupElementsMap.set(topic, groupAfterError); // Update map
-                            } else {
-                                console.error(` -> Failed to find group "${topic}" after creation error.`);
-                            }
+                            console.error(`Error creating group for topic "${topic}":`, e);
                         }
                     } else {
                         console.log(` -> Skipping creation of small group "${topic}" (${tabsForThisTopic.length} tabs) - didn't meet threshold and wasn't a pre-group or directly from AI.`);
@@ -1542,12 +1571,12 @@
                     separatorsToSort.forEach(sep => {
                         // Check if element still exists before removing class
                         if (sep && sep.isConnected) {
-                             sep.classList.remove('separator-is-sorting');
-                             if (sep._sortingColorInterval) {
-                                 clearInterval(sep._sortingColorInterval);
-                                 sep._sortingColorInterval = null;
-                                 sep.style.removeProperty('--sorting-color');
-                             }
+                            sep.classList.remove('separator-is-sorting');
+                            if (sep._sortingColorInterval) {
+                                clearInterval(sep._sortingColorInterval);
+                                sep._sortingColorInterval = null;
+                                sep.style.removeProperty('--sorting-color');
+                            }
                         }
                     });
                 }, 3000); // Minimum 3 seconds to ensure animation is visible
@@ -1581,20 +1610,20 @@
 
             const tabsToClose = [];
             for (const tab of gBrowser.tabs) {
-                 const isSameWorkSpace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
-                 const groupParent = tab.closest('tab-group');
-                 // Check if the parent group matches the selector for the *current* workspace
-                 const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-                 const isEmptyZenTab = tab.hasAttribute("zen-empty-tab");
+                const isSameWorkSpace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
+                const groupParent = tab.closest('tab-group');
+                // Check if the parent group matches the selector for the *current* workspace
+                const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
+                const isEmptyZenTab = tab.hasAttribute("zen-empty-tab");
 
-                 if (isSameWorkSpace &&         // In the correct workspace
+                if (isSameWorkSpace &&         // In the correct workspace
                     !tab.selected &&            // Not the active tab
                     !tab.pinned &&              // Not pinned
                     !isInGroupInCorrectWorkspace && // Not in a group belonging to this workspace
                     !isEmptyZenTab &&           // Not an empty Zen tab
                     tab.isConnected) {          // Is connected
                     tabsToClose.push(tab);
-                 }
+                }
             }
 
             if (tabsToClose.length === 0) {
@@ -1663,7 +1692,7 @@
                 // Fallback: append to the end
                 tabContextMenu.appendChild(menuFragment);
             }
-            
+
             console.log("BUTTONS: Sort Tabs context menu item added successfully.");
         } catch (e) {
             console.error("BUTTONS: Error adding context menu item:", e);
@@ -1682,7 +1711,7 @@
             try {
                 const menuItem = document.getElementById('context_zenSortTabs');
                 const separator = document.getElementById('context_zen-sort-tabs-separator');
-                
+
                 if (!menuItem || !separator) return;
 
                 // Check if sort feature and context menu are enabled
@@ -1694,9 +1723,9 @@
 
                 // Check if we're in the correct workspace
                 const currentWorkspaceId = window.gZenWorkspaces?.activeWorkspace;
-                const showMenuItem = currentWorkspaceId && 
-                                    (!gBrowser?.selectedTabs || gBrowser.selectedTabs.length <= 1); // Hide when multiple tabs selected (use button instead)
-                
+                const showMenuItem = currentWorkspaceId &&
+                    (!gBrowser?.selectedTabs || gBrowser.selectedTabs.length <= 1); // Hide when multiple tabs selected (use button instead)
+
                 if (showMenuItem) {
                     menuItem.removeAttribute('hidden');
                     separator.removeAttribute('hidden');
@@ -1708,7 +1737,7 @@
                 console.error("BUTTONS: Error in context menu popupshowing listener:", e);
             }
         });
-        
+
         console.log("BUTTONS: Context menu listener setup complete.");
     }
 
@@ -1834,7 +1863,7 @@
         };
 
         // Hook into onTabBrowserInserted (called when workspace elements are likely created/updated)
-        gZenWorkspaces.onTabBrowserInserted = function(event) {
+        gZenWorkspaces.onTabBrowserInserted = function (event) {
             // Call the original function first
             if (typeof gZenWorkspaces.originalHooks.onTabBrowserInserted === 'function') {
                 try {
@@ -1848,8 +1877,8 @@
         };
 
         // Hook into updateTabsContainers (called on various workspace/tab changes)
-        gZenWorkspaces.updateTabsContainers = function(...args) {
-             // Call the original function first
+        gZenWorkspaces.updateTabsContainers = function (...args) {
+            // Call the original function first
             if (typeof gZenWorkspaces.originalHooks.updateTabsContainers === 'function') {
                 try {
                     gZenWorkspaces.originalHooks.updateTabsContainers.apply(gZenWorkspaces, args);
@@ -1891,7 +1920,7 @@
 
                 // Defer final setup slightly to ensure everything is stable
                 const finalSetup = () => {
-                     try {
+                    try {
                         injectStyles();
                         setupCommandsAndListener();
                         addButtonsToAllSeparators(); // Initial add
@@ -1903,11 +1932,11 @@
                 };
 
                 // Use requestIdleCallback if available for less impact, otherwise fallback to setTimeout
-                 if ('requestIdleCallback' in window) {
-                     requestIdleCallback(finalSetup, { timeout: 2000 });
-                 } else {
-                     setTimeout(finalSetup, 500);
-                 }
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(finalSetup, { timeout: 2000 });
+                } else {
+                    setTimeout(finalSetup, 500);
+                }
 
             } else if (checkCount > maxChecks) {
                 clearInterval(initCheckInterval); // Stop checking after timeout
@@ -1921,11 +1950,11 @@
                     gZenWorkspacesReady
                 });
                 // Provide specific feedback
-                 if (!gZenWorkspacesReady) console.error(" -> gZenWorkspaces might not be fully initialized yet (activeWorkspace missing?). Ensure Zen Tab Organizer extension is loaded and enabled BEFORE this script runs.");
-                 if (!separatorExists && !peripheryExists) console.error(" -> Neither separator element '.pinned-tabs-container-separator' nor fallback periphery '#tabbrowser-arrowscrollbox-periphery' found in the DOM.");
-                 if (!commandSetExists) console.error(" -> Command set '#zenCommandSet' not found. Ensure Zen Tab Organizer extension is loaded and enabled.");
-                 if (!tabContextMenuExists) console.error(" -> Tab context menu '#tabContextMenu' not found. Ensure Zen Browser tab context menu is loaded.");
-                 if (!gBrowserReady) console.error(" -> Global 'gBrowser' object not ready.");
+                if (!gZenWorkspacesReady) console.error(" -> gZenWorkspaces might not be fully initialized yet (activeWorkspace missing?). Ensure Zen Tab Organizer extension is loaded and enabled BEFORE this script runs.");
+                if (!separatorExists && !peripheryExists) console.error(" -> Neither separator element '.pinned-tabs-container-separator' nor fallback periphery '#tabbrowser-arrowscrollbox-periphery' found in the DOM.");
+                if (!commandSetExists) console.error(" -> Command set '#zenCommandSet' not found. Ensure Zen Tab Organizer extension is loaded and enabled.");
+                if (!tabContextMenuExists) console.error(" -> Tab context menu '#tabContextMenu' not found. Ensure Zen Browser tab context menu is loaded.");
+                if (!gBrowserReady) console.error(" -> Global 'gBrowser' object not ready.");
             }
         }, checkInterval);
     }
@@ -1939,5 +1968,5 @@
         // Otherwise, wait for the 'load' event
         window.addEventListener("load", initializeScript, { once: true });
     }
-  
+
 })(); // End script wrapper
