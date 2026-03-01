@@ -1,10 +1,9 @@
-// VERSION 4.14.1 (Fix AI bypass by pre-grouping; Fix built-in AI; Add Resort Existing Groups toggle)
+// VERSION 4.14.2 (Fix sort button position; remove -moz-bool-pref CSS; remove enable_clear pref)
 (() => {
   // --- Configuration ---
 
   // Feature toggle preference keys
   const ENABLE_SORT_PREF = "extensions.tabgroups.enable_sort";
-  const ENABLE_CLEAR_PREF = "extensions.tabgroups.enable_clear";
   const ENABLE_CONTEXT_MENU_PREF = "extensions.tabgroups.enable_context_menu";
   const ENABLE_AUTO_SORT_PREF = "extensions.tabgroups.auto_sort";
   const RESORT_EXISTING_GROUPS_PREF =
@@ -44,7 +43,6 @@
 
   // Read preference values
   const ENABLE_SORT_VALUE = getPref(ENABLE_SORT_PREF, true);
-  const ENABLE_CLEAR_VALUE = getPref(ENABLE_CLEAR_PREF, true);
   const ENABLE_CONTEXT_MENU_VALUE = getPref(ENABLE_CONTEXT_MENU_PREF, true);
   const ENABLE_AUTO_SORT_VALUE = getPref(ENABLE_AUTO_SORT_PREF, false);
   const RESORT_EXISTING_GROUPS_VALUE = getPref(
@@ -74,7 +72,6 @@
   const CONFIG = {
     featureConfig: {
       sort: ENABLE_SORT_VALUE,
-      clear: ENABLE_CLEAR_VALUE,
       contextMenu: ENABLE_CONTEXT_MENU_VALUE,
       autoSort: ENABLE_AUTO_SORT_VALUE,
       resortExistingGroups: RESORT_EXISTING_GROUPS_VALUE,
@@ -387,8 +384,8 @@
             opacity: 0;
             transition: opacity 0.1s ease-in-out;
             position: absolute;
-            /* Simple, stable positioning. The parent container's right edge never moves. */
-            right: 0px;
+            /* Always offset to the left of the clear button (clear is always visible) */
+            right: 55px;
             top: 50%;
             transform: translateY(-50%);
             font-size: 12px;
@@ -400,12 +397,6 @@
             color: gray;
             z-index: 10; /* Higher z-index to ensure buttons are on top */
             label { display: block; }
-        }
-
-        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") {
-            #sort-button {
-                right: 55px;
-            }
         }
 
         #sort-button:hover {
@@ -437,26 +428,7 @@
             border-radius: 4px;
         }
 
-        /* disable the buttons according to preferences */
-        @media not (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-            #sort-button {
-                display: none;
-            }
-        }
-        @media not (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") {
-            #clear-button {
-                display: none;
-            }
-        }
-
-        @media not (-moz-bool-pref: "${ENABLE_CONTEXT_MENU_PREF}") {
-            #context_zenSortTabs {
-                display: none;
-            }
-            #context_zen-sort-tabs-separator {
-                display: none;
-            }
-        }
+        /* Button visibility and context menu visibility are controlled by JS */
 
         /*======== sort-button , clear-button ============*/
         .pinned-tabs-container-separator,
@@ -490,62 +462,22 @@
             width: 100% !important;
         }
 
-        /* widths for when we have both enabled */
-        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") and (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-            .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 115px);
-                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 115px);
-            }
-            .separator-is-sorting:hover::before {
-                width: calc(100% - 115px) !important;
-            }
-            .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 115px);
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 115px);
-            }
+        /* Hover width: both buttons visible (sort at 55px + clear at 60px = 115px total) */
+        .pinned-tabs-container-separator:hover::before {
+            width: calc(100% - 115px);
+            background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
         }
-        /* when we only have clear */
-        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") and (not (-moz-bool-pref: "${ENABLE_SORT_PREF}")) {
-            .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 60px);
-                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 60px);
-            }
-            .separator-is-sorting:hover::before {
-                width: calc(100% - 60px) !important;
-            }
-            .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 60px);
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 60px);
-            }
+        .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator:hover::before {
+            width: calc(100% - 115px);
         }
-        /* when we only have sort */
-        @media (not (-moz-bool-pref: "${ENABLE_CLEAR_PREF}")) and (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-            .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 65px);
-                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator:hover::before {
-                width: calc(100% - 65px);
-            }
-            .separator-is-sorting:hover::before {
-                width: calc(100% - 65px) !important;
-            }
-            .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 65px);
-            }
-            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
-                width: calc(100% - 65px);
-            }
+        .separator-is-sorting:hover::before {
+            width: calc(100% - 115px) !important;
+        }
+        .pinned-tabs-container-separator.separator-is-sorting:hover::after {
+            width: calc(100% - 115px);
+        }
+        .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
+            width: calc(100% - 115px);
         }
 
 
@@ -2426,8 +2358,8 @@
   function ensureButtonsExist(container) {
     if (!container) return;
 
-    // Ensure Sort Button
-    if (!container.querySelector("#sort-button")) {
+    // Ensure Sort Button (only if sort feature is enabled)
+    if (CONFIG.featureConfig.sort && !container.querySelector("#sort-button")) {
       try {
         const buttonFragment = window.MozXULElement.parseXULToFragment(
           `<toolbarbutton id="sort-button" command="cmd_zenSortTabs" label="⇅ Sort" tooltiptext="Sort Tabs into Groups by Topic (AI)"/>`,
@@ -2443,7 +2375,7 @@
       }
     }
 
-    // Ensure Clear Button
+    // Ensure Clear Button (clear.uc.js may have already added this)
     if (!container.querySelector("#clear-button")) {
       try {
         const buttonFragment = window.MozXULElement.parseXULToFragment(
@@ -2516,11 +2448,8 @@
       }
     }
 
-    // Add Clear Command if missing
-    if (
-      !zenCommands.querySelector("#cmd_zenClearTabs") &&
-      CONFIG.featureConfig.clear
-    ) {
+    // Add Clear Command if missing (clear.uc.js may have already added this)
+    if (!zenCommands.querySelector("#cmd_zenClearTabs")) {
       try {
         const cmd = window.MozXULElement.parseXULToFragment(
           `<command id="cmd_zenClearTabs"/>`,
