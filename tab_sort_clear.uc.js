@@ -1,10 +1,10 @@
-// VERSION 4.14.1 (Fix sort/context-menu buttons disappearing due to unset prefs; Fix AI bypass; Fix built-in AI; Add Resort Groups toggle)
+// VERSION 4.14.1 (Fix AI bypass by pre-grouping; Fix built-in AI; Add Resort Existing Groups toggle)
 (() => {
   // --- Configuration ---
 
   // Feature toggle preference keys
   const ENABLE_SORT_PREF = "extensions.tabgroups.enable_sort";
-  // const ENABLE_CLEAR_PREF = "extensions.tabgroups.enable_clear";
+  const ENABLE_CLEAR_PREF = "extensions.tabgroups.enable_clear";
   const ENABLE_CONTEXT_MENU_PREF = "extensions.tabgroups.enable_context_menu";
   const ENABLE_AUTO_SORT_PREF = "extensions.tabgroups.auto_sort";
   const RESORT_EXISTING_GROUPS_PREF =
@@ -21,26 +21,6 @@
   const OPENAI_ENDPOINT_PREF = "extensions.tabgroups.openai_endpoint";
   const OPENAI_API_KEY_PREF = "extensions.tabgroups.openai_api_key";
   const OPENAI_MODEL_PREF = "extensions.tabgroups.openai_model";
-
-  // Ensure default preferences are written to about:config on first run so that
-  // CSS -moz-bool-pref media queries (which read directly from about:config and
-  // return false for any unset pref) reflect the correct default state.
-  try {
-    const _ps = Services.prefs;
-    const _boolDefaults = [
-      [ENABLE_SORT_PREF, true],
-      [ENABLE_CONTEXT_MENU_PREF, true],
-      [ENABLE_AUTO_SORT_PREF, false],
-      [RESORT_EXISTING_GROUPS_PREF, false],
-    ];
-    _boolDefaults.forEach(([key, val]) => {
-      if (!_ps.prefHasUserValue(key)) {
-        _ps.setBoolPref(key, val);
-      }
-    });
-  } catch (e) {
-    console.warn("TabGroups: Could not write default preferences:", e);
-  }
 
   // Helper function to read preferences with fallbacks
   const getPref = (prefName, defaultValue = "") => {
@@ -64,7 +44,7 @@
 
   // Read preference values
   const ENABLE_SORT_VALUE = getPref(ENABLE_SORT_PREF, true);
-  // const ENABLE_CLEAR_VALUE = getPref(ENABLE_CLEAR_PREF, true);
+  const ENABLE_CLEAR_VALUE = getPref(ENABLE_CLEAR_PREF, true);
   const ENABLE_CONTEXT_MENU_VALUE = getPref(ENABLE_CONTEXT_MENU_PREF, true);
   const ENABLE_AUTO_SORT_VALUE = getPref(ENABLE_AUTO_SORT_PREF, false);
   const RESORT_EXISTING_GROUPS_VALUE = getPref(
@@ -94,7 +74,7 @@
   const CONFIG = {
     featureConfig: {
       sort: ENABLE_SORT_VALUE,
-      clear: true, // Always enabled
+      clear: ENABLE_CLEAR_VALUE,
       contextMenu: ENABLE_CONTEXT_MENU_VALUE,
       autoSort: ENABLE_AUTO_SORT_VALUE,
       resortExistingGroups: RESORT_EXISTING_GROUPS_VALUE,
@@ -408,7 +388,7 @@
             transition: opacity 0.1s ease-in-out;
             position: absolute;
             /* Simple, stable positioning. The parent container's right edge never moves. */
-            right: 55px; 
+            right: 0px;
             top: 50%;
             transform: translateY(-50%);
             font-size: 12px;
@@ -422,6 +402,11 @@
             label { display: block; }
         }
 
+        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") {
+            #sort-button {
+                right: 55px;
+            }
+        }
 
         #sort-button:hover {
             opacity: 1;
@@ -451,24 +436,25 @@
             color: white;
             border-radius: 4px;
         }
-        
+
         /* disable the buttons according to preferences */
         @media not (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-        
             #sort-button {
-            display: none;
+                display: none;
+            }
+        }
+        @media not (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") {
+            #clear-button {
+                display: none;
             }
         }
 
-
         @media not (-moz-bool-pref: "${ENABLE_CONTEXT_MENU_PREF}") {
-        
             #context_zenSortTabs {
-            display: none;
+                display: none;
             }
-            
             #context_zen-sort-tabs-separator {
-            display: none;
+                display: none;
             }
         }
 
@@ -487,7 +473,7 @@
             background-color: transparent !important; /* The container itself is invisible */
             overflow: visible !important; /* Ensure buttons don't get clipped */
         }
-        
+
         .pinned-tabs-container-separator::before {
             content: '';
             position: absolute;
@@ -498,20 +484,14 @@
             background-color: var(--lwt-toolbarbutton-border-color, rgba(200, 200, 200, 0.1));
             transition: width 0.1s ease-in-out, background-color 0.3s ease-out;
         }
-        
+
         /* Disable hover width tweak when actively sorting to avoid overriding animation */
         .pinned-tabs-container-separator.separator-is-sorting:hover::before {
             width: 100% !important;
         }
 
-        /* Ensure clear button is always visible */
-        #clear-button {
-            display: flex !important;
-        }
-
-        /* Logic for when Sort Button is ALSO enabled */
-        @media (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-             /* Use broader hover area for both buttons */
+        /* widths for when we have both enabled */
+        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") and (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
             .pinned-tabs-container-separator:hover::before {
                 width: calc(100% - 115px);
                 background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
@@ -529,11 +509,8 @@
                 width: calc(100% - 115px);
             }
         }
-
-        /* Logic for when ONLY Clear Button is enabled (Sort disabled) */
-        @media not (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
-            #sort-button { display: none; }
-            
+        /* when we only have clear */
+        @media (-moz-bool-pref: "${ENABLE_CLEAR_PREF}") and (not (-moz-bool-pref: "${ENABLE_SORT_PREF}")) {
             .pinned-tabs-container-separator:hover::before {
                 width: calc(100% - 60px);
                 background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
@@ -549,6 +526,25 @@
             }
             .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
                 width: calc(100% - 60px);
+            }
+        }
+        /* when we only have sort */
+        @media (not (-moz-bool-pref: "${ENABLE_CLEAR_PREF}")) and (-moz-bool-pref: "${ENABLE_SORT_PREF}") {
+            .pinned-tabs-container-separator:hover::before {
+                width: calc(100% - 65px);
+                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
+            }
+            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator:hover::before {
+                width: calc(100% - 65px);
+            }
+            .separator-is-sorting:hover::before {
+                width: calc(100% - 65px) !important;
+            }
+            .pinned-tabs-container-separator.separator-is-sorting:hover::after {
+                width: calc(100% - 65px);
+            }
+            .zen-workspace-tabs-section[hide-separator] .pinned-tabs-container-separator.separator-is-sorting:hover::after {
+                width: calc(100% - 65px);
             }
         }
 
@@ -2493,19 +2489,12 @@
   }
 
   function setupCommandsAndListener() {
-    let zenCommands = document.querySelector("commandset#zenCommandSet");
-    if (!zenCommands) {
-      console.warn(
-        "BUTTONS INIT: 'commandset#zenCommandSet' not found. Falling back to '#mainCommandSet'.",
-      );
-      zenCommands = document.querySelector("#mainCommandSet");
-    }
-
+    const zenCommands = document.querySelector("commandset#zenCommandSet");
     if (!zenCommands) {
       console.error(
-        "BUTTONS INIT: Could not find any commandset (#zenCommandSet or #mainCommandSet). Commands cannot be registered.",
+        "BUTTONS INIT: Could not find 'commandset#zenCommandSet'. Zen Tab Organizer might not be fully loaded.",
       );
-      return; // Cannot proceed without a place to put commands
+      return;
     }
 
     // Add Sort Command if missing
@@ -2693,9 +2682,7 @@
         "#tabbrowser-arrowscrollbox-periphery",
       );
       const commandSetExists =
-        !!document.querySelector("commandset#zenCommandSet") ||
-        !!document.querySelector("commandset#mainCommandSet") ||
-        !!document.querySelector("#mainCommandSet");
+        !!document.querySelector("commandset#zenCommandSet");
       const tabContextMenuExists = !!document.getElementById("tabContextMenu");
       const gBrowserReady =
         typeof gBrowser !== "undefined" && gBrowser.tabContainer;

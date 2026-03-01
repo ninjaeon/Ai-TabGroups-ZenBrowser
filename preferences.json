@@ -11,6 +11,12 @@
     "defaultValue": true
   },
   {
+    "property": "extensions.tabgroups.enable_clear",
+    "label": "Enable the clear tabs button.",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
     "property": "extensions.tabgroups.enable_context_menu",
     "label": "Enable the sort tabs context menu item.",
     "type": "checkbox",
