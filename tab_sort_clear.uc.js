@@ -1,4 +1,4 @@
-// VERSION 4.14.0 (Fix AI bypass by pre-grouping; Fix built-in AI; Add Resort Existing Groups toggle)
+// VERSION 4.14.1 (Fix sort/context-menu buttons disappearing due to unset prefs; Fix AI bypass; Fix built-in AI; Add Resort Groups toggle)
 (() => {
   // --- Configuration ---
 
@@ -21,6 +21,26 @@
   const OPENAI_ENDPOINT_PREF = "extensions.tabgroups.openai_endpoint";
   const OPENAI_API_KEY_PREF = "extensions.tabgroups.openai_api_key";
   const OPENAI_MODEL_PREF = "extensions.tabgroups.openai_model";
+
+  // Ensure default preferences are written to about:config on first run so that
+  // CSS -moz-bool-pref media queries (which read directly from about:config and
+  // return false for any unset pref) reflect the correct default state.
+  try {
+    const _ps = Services.prefs;
+    const _boolDefaults = [
+      [ENABLE_SORT_PREF, true],
+      [ENABLE_CONTEXT_MENU_PREF, true],
+      [ENABLE_AUTO_SORT_PREF, false],
+      [RESORT_EXISTING_GROUPS_PREF, false],
+    ];
+    _boolDefaults.forEach(([key, val]) => {
+      if (!_ps.prefHasUserValue(key)) {
+        _ps.setBoolPref(key, val);
+      }
+    });
+  } catch (e) {
+    console.warn("TabGroups: Could not write default preferences:", e);
+  }
 
   // Helper function to read preferences with fallbacks
   const getPref = (prefName, defaultValue = "") => {
