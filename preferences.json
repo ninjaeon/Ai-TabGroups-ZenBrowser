@@ -9,27 +9,21 @@
     "label": "Enable the sort tabs button.",
     "type": "checkbox",
     "defaultValue": true
-    },
-    {
-    "property": "extensions.tabgroups.enable_clear",
-    "label": "Enable the clear tabs button.",
-    "type": "checkbox",
-    "defaultValue": true
-    },
-    {
+  },
+  {
     "property": "extensions.tabgroups.enable_context_menu",
     "label": "Enable the sort tabs context menu item.",
     "type": "checkbox",
     "defaultValue": true,
     "restart": true
-    },
+  },
   {
     "property": "extensions.tabgroups.ai_model",
     "label": "Choose AI - Gemini, Ollama, or Mistral",
     "type": "dropdown",
     "placeholder": false,
     "value": "number",
-    "default": 1,
+    "default": 5,
     "options": [
       {
         "value": 1,
@@ -46,10 +40,39 @@
       {
         "value": 4,
         "label": "OpenAI-Compatible"
+      },
+      {
+        "value": 5,
+        "label": "Built-in AI (Firefox Local)"
       }
     ],
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
+    ]
+  },
+  {
+    "property": "extensions.tabgroups.auto_sort",
+    "label": "Auto-sort tabs when they are opened or updated.",
+    "type": "checkbox",
+    "defaultValue": false
+  },
+  {
+    "property": "extensions.tabgroups.resort_existing_groups",
+    "label": "Resort existing tab groups when sort button is clicked (dissolves and re-sorts all groups).",
+    "type": "checkbox",
+    "defaultValue": false,
+    "conditions": [
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ]
   },
   {
@@ -57,8 +80,18 @@
     "label": "Gemini",
     "id": "gemini-separator",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 1 }}, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 1
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -68,8 +101,18 @@
     "type": "string",
     "placeholder": "Enter your Gemini API key here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 1 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 1
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -80,8 +123,18 @@
     "type": "string",
     "placeholder": "Enter your Gemini Model here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 1 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 1
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -90,8 +143,18 @@
     "label": "Ollama",
     "id": "ollama-separator",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 2 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 2
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -102,8 +165,18 @@
     "type": "string",
     "placeholder": "Enter your Ollama Endpoint URL here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 2 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 2
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -114,8 +187,18 @@
     "type": "string",
     "placeholder": "Enter your Ollama Model here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 2 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 2
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -124,8 +207,18 @@
     "label": "Mistral",
     "id": "mistral-separator",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 3 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 3
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -135,8 +228,18 @@
     "type": "string",
     "placeholder": "Enter your Mistral API key here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 3 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 3
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -145,8 +248,18 @@
     "label": "OpenAI-Compatible",
     "id": "openai-separator",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 4 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 4
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -157,8 +270,18 @@
     "type": "string",
     "placeholder": "Enter your OpenAI-Compatible endpoint URL here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 4 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 4
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -168,8 +291,18 @@
     "type": "string",
     "placeholder": "Enter your OpenAI-Compatible API key here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 4 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 4
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   },
@@ -180,8 +313,18 @@
     "type": "string",
     "placeholder": "Enter your OpenAI-Compatible model here",
     "conditions": [
-      { "if": { "property": "extensions.tabgroups.ai_model", "value": 4 } }, 
-      { "if": { "property": "extensions.tabgroups.enable_sort", "value":true}}
+      {
+        "if": {
+          "property": "extensions.tabgroups.ai_model",
+          "value": 4
+        }
+      },
+      {
+        "if": {
+          "property": "extensions.tabgroups.enable_sort",
+          "value": true
+        }
+      }
     ],
     "operator": "AND"
   }
